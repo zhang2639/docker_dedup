@@ -55,17 +55,15 @@ class DAL():
         return img_data
 
     def read_files_from_dir(self, path, block_size):
-        # path should not end with '/'; path is diff dir
+         # path should not end with '/'
         if (path[-1] == '/'):
             path = path[:-1]
 
         list_meta = []
         list_dir = []
         # [file, [fp], file, [fp]...[dir]]
-        os.chroot(path)
-
+        #os.chroot(path)
         for root, dirs, files in os.walk(path):
-            #相对路径
             string = root.replace(path, '', 1) + '/'
             if dirs:
                 dentry = [string + u for u in dirs]
@@ -73,9 +71,16 @@ class DAL():
             for f in files:
                 #print(root.replace(path, '', 1) + '/' + f) #当前路径下所有非目录子文件
                 file = string + f
-                img_block_gen = io.read_chunks_from_file(root + '/' + f, block_size)
-                list_meta.append(file)
-                list_meta.append(self.add_chunks(img_block_gen))
+                if os.path.islink(root + '/' + f):
+                    continue
+                try:
+                    with open(root + '/' + f, 'rb', buffering=1024*64) as fin:
+                        img_block_gen = io.read_chunks_from_file(fin, block_size)
+                        list_meta.append(file)
+                        list_meta.append(self.add_chunks(img_block_gen))
+                except IOError:
+                    print 'open %s error' % (root + '/' + f)
+                    continue
 
         list_meta.append(list_dir)
         return list_meta
