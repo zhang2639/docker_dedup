@@ -1,0 +1,29 @@
+# site id, incremental, starting from 0
+id: 0
+
+# the ip address of all the sites
+peers: [192.168.204.128:3000]
+concurrent_conn_count: 1
+
+# options: dedup
+storage_method: dedup
+# in case 'dedup' storage backend is chosen
+chunk_size: 4096
+
+# mainly for dedup: redis / cassandra
+storage_backend: redis
+storage_address: 127.0.0.1
+
+# Chunk scheduler: random / network-aware
+chunk_scheduler: random
+
+# compression level: 0 -> 9
+compression_level: 0
+
+ws_address_bind: 127.0.0.1
+ws_address_connect: 127.0.0.1:8080
+
+zmq_proxy_to_comm_endpoint: 'tcp://<zmq_proxy_to_comm_endpoint>'
+zmq_comm_to_proxy_endpoint: 'tcp://<zmq_comm_to_proxy_endpoint>'
+
+root_dir: '/home/zhang/Nitro_test'
