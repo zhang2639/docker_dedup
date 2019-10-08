@@ -24,3 +24,29 @@ class xxHasher(Hasher):
 
     def get_digest_size(self):
         return self.hexdigest_size
+
+import hashlib
+
+class Hasher256(Hasher):
+
+    def __init__(self):
+        self.hexdigest_size = int(hashlib.sha256('x').digestsize * 2)
+
+
+    def hash(self, x):
+        return hashlib.sha256(x).hexdigest()
+
+    def get_digest_size(self):
+        return self.hexdigest_size
+
+class MD5(Hasher):
+
+    def __init__(self):
+        self.hexdigest_size = int(hashlib.md5('x').digestsize * 2)
+
+
+    def hash(self, x):
+        return hashlib.md5(x).hexdigest()
+
+    def get_digest_size(self):
+        return self.hexdigest_size

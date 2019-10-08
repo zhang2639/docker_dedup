@@ -90,6 +90,9 @@ class NitroConfiguration(object):
     def storage_method(self):
         return self.config["storage_method"]
 
+    def storage_algorithm(self):
+        return self.config["storage_algorithm"]
+
     def chunk_size(self):
         return int(self.config["chunk_size"])
 

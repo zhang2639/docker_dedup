@@ -10,6 +10,9 @@ storage_method: dedup
 # in case 'dedup' storage backend is chosen
 chunk_size: 4096
 
+# options: dedup algorithm: xxhash / md5 / sha256
+storage_algorithm: md5
+
 # mainly for dedup: redis / cassandra
 storage_backend: redis
 storage_address: 127.0.0.1

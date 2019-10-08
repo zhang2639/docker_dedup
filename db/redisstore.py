@@ -37,7 +37,8 @@ class RedisStore(DataStore):
         return self.r.info()['used_memory']
 
     def dump(self):
-        return "dbsize: %d \n info: %r\nmemmory:%s  memmory_dataset:%s" % (int(self.r.dbsize()), self.r.info(), self.r.info()['used_memory_human'], self.r.info()['used_memory_dataset'])
+        #return "dbsize: %d \n info: %r\nmemmory:%s  memmory_dataset:%s" % (int(self.r.dbsize()), self.r.info(), self.r.info()['used_memory_human'], self.r.info()['used_memory_dataset'])
+	return "dbsize: %d \n info: %r\nmemmory:%s" % (int(self.r.dbsize()), self.r.info(), self.r.info()['used_memory_human'])
 
     def reset(self):
         self.r.flushall()
