@@ -14,8 +14,11 @@ chunk_size: 4096
 storage_algorithm: md5
 
 # mainly for dedup: redis / cassandra
-storage_backend: redis
+storage_backend: cassandra
 storage_address: 127.0.0.1
+
+# use image type to accelerate hash lookup: 0 (not) / 1 (use)
+image_type: 1
 
 # Chunk scheduler: random / network-aware
 chunk_scheduler: random

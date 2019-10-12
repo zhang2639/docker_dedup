@@ -17,8 +17,13 @@ class AppFactory(object):
             from db.redisstore import RedisStore
             datastore = RedisStore(self.cfg.storage_address())
         elif storage_backend == 'cassandra':
-            from db.cassandrastore import CassandraStore
-            datastore = CassandraStore(self.cfg.storage_address())
+            image_type = self.cfg.image_type()
+            if image_type == 0:
+                from db.cassandrastore import CassandraStore
+                datastore = CassandraStore(self.cfg.storage_address())
+            else:
+                from db.cassandrastore import CassandraStore_use_image_type
+                datastore = CassandraStore_use_image_type(self.cfg.storage_address())
         else:
             raise Exception('unknown storage backend: [%s]' % storage_backend)
 
