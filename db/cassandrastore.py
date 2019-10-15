@@ -42,10 +42,10 @@ class CassandraStore(DataStore):
             session.execute(query)
         except Exception as e:
             pass
-        try:
-            session.execute("TRUNCATE chunk")
-        except Exception as e:
-            pass
+        #try:
+        #    session.execute("TRUNCATE chunk")
+        #except Exception as e:
+        #    pass
 
         self.insert_stmt = session.prepare("INSERT INTO chunk (digest, block) VALUES(?, ?)")
         self.lookup_stmt = session.prepare("SELECT * FROM chunk WHERE digest=?")
@@ -53,7 +53,12 @@ class CassandraStore(DataStore):
         self.session = session
 
     def put(self, key, value):
-        self.session.execute(self.insert_stmt, (key, value))
+        try:
+            self.session.execute(self.insert_stmt, (key, value))
+        except UnicodeEncodeError as e:
+            print key
+            print '*************'
+            print e
 
     def get(self, key):
         result = self.session.execute(self.lookup_stmt, (key, ))
@@ -105,18 +110,18 @@ class CassandraStore_use_image_type(DataStore):
         print "successfully connected to cassandra-server"
 
         try:
-            session.execute("CREATE KEYSPACE tp WITH replication = "
+            session.execute("CREATE KEYSPACE tp_type WITH replication = "
                             "{'class':'SimpleStrategy','replication_factor':1}")
         except Exception as e:
             pass
 
-        session.set_keyspace('tp')
+        session.set_keyspace('tp_type')
         # session.execute("use tp")
         # session.execute("CONSISTENCY ONE")
         # print "default_consistency_level: (10)", session.default_consistency_level
 
         try:
-            query = """CREATE TABLE chunk(digest text PRIMARY KEY, block blob)
+            query = """CREATE TABLE chunk(img text, digest text, block blob, PRIMARY KEY(img, digest))
                     WITH caching = {'keys':'ALL', 'rows_per_partition':'1000'}"""
             session.execute(query)
         except Exception as e:
@@ -126,16 +131,16 @@ class CassandraStore_use_image_type(DataStore):
         except Exception as e:
             pass
 
-        self.insert_stmt = session.prepare("INSERT INTO chunk (digest, block) VALUES(?, ?)")
-        self.lookup_stmt = session.prepare("SELECT * FROM chunk WHERE digest=?")
+        self.insert_stmt = session.prepare("INSERT INTO chunk (img, digest, block) VALUES(?, ?, ?)")
+        self.lookup_stmt = session.prepare("SELECT * FROM chunk WHERE img=? AND digest=?")
 
         self.session = session
 
-    def put(self, key, value):
-        self.session.execute(self.insert_stmt, (key, value))
+    def put(self, img, key, value):
+        self.session.execute(self.insert_stmt, (img, key, value))
 
-    def get(self, key):
-        result = self.session.execute(self.lookup_stmt, (key, ))
+    def get(self, img, key):
+        result = self.session.execute(self.lookup_stmt, (img, key))
         return list(result)[0].block
 
     def exists(self, key):

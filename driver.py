@@ -32,6 +32,8 @@ def run(config_file):
 
 if __name__ == "__main__":
     import sys
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
     from docopt import docopt
     arguments = docopt(__doc__, version='0.1.0')
     config_file = arguments["<config-file>"] if arguments["--config-file"] \
