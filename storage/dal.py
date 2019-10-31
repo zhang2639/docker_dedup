@@ -10,13 +10,13 @@ class DAL():
     Provide more comprehensive api for DB layer
     """
 
-    def __init__(self, ds, chunk_size, compressor, hasher):
+    def __init__(self, ds, chunk_min_size, chunk_ave_size, chunk_max_size, compressor, hasher):
         self.ds = ds
-        self.chunk_size = chunk_size
         self.compressor = compressor
         self.hasher = hasher
-        set_min_block_size(4096)
-        set_average_block_size(chunk_size)
+        set_min_block_size(chunk_min_size)
+        set_average_block_size(chunk_ave_size)
+        set_max_block_size(chunk_max_size)
 
 
     def store_image(self, img_data):

@@ -36,14 +36,16 @@ class AppFactory(object):
             from storage.hasher import xxHasher, Hasher256, MD5
             from storage.dedup_backend import DedupBackendStorage
 
-            chunk_size = self.cfg.chunk_size()
+            chunk_min_size = self.cfg.chunk_min_size()
+            chunk_ave_size = self.cfg.chunk_ave_size()
+            chunk_max_size = self.cfg.chunk_max_size()
             storage_algorithm = self.cfg.storage_algorithm()
             if storage_algorithm == 'xxhash':
-                dal = DAL(datastore, chunk_size, compressor, xxHasher())
+                dal = DAL(datastore, chunk_min_size, chunk_ave_size, chunk_max_size, compressor, xxHasher())
             elif storage_algorithm == 'md5':
-                dal = DAL(datastore, chunk_size, compressor, MD5())
+                dal = DAL(datastore, chunk_min_size, chunk_ave_size, chunk_max_size, compressor, MD5())
             elif storage_algorithm == 'sha256':
-                dal = DAL(datastore, chunk_size, compressor, Hasher256())
+                dal = DAL(datastore, chunk_min_size, chunk_ave_size, chunk_max_size, compressor, Hasher256())
             else:
                 raise Exception('unknown storage algorithm : [%s]' % storage_algorithm)
             self.storage = DedupBackendStorage(dal, self.cfg)

@@ -96,8 +96,14 @@ class NitroConfiguration(object):
     def image_type(self):
         return self.config["image_type"]
 
-    def chunk_size(self):
-        return int(self.config["chunk_size"])
+    def chunk_min_size(self):
+        return int(self.config["chunk_min_size"])
+
+    def chunk_ave_size(self):
+        return int(self.config["chunk_ave_size"])
+
+    def chunk_max_size(self):
+        return int(self.config["chunk_max_size"])
 
     def block_size(self):
         return int(self.config["block_size"])

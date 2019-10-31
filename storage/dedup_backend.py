@@ -177,12 +177,12 @@ class DedupBackendStorage(BackendStorage):
                 #put listener to work first
                 self.watcher = self.pool.apply_async(
                     write_chunk_image,
-                    (out_file, self.cfg.chunk_size(), img_data.fingerprints, self.q))
+                    (out_file, self.cfg.chunk_min_size(), img_data.fingerprints, self.q))
             else:
                 from storage.disk_thread import DiskThread
                 from Queue import Queue
                 self.q = Queue()
-                self.dt = DiskThread(out_file, self.cfg.chunk_size(),
+                self.dt = DiskThread(out_file, self.cfg.chunk_min_size(),
                                      img_data.fingerprints, self.q)
                 self.dt.start()
 
