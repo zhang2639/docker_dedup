@@ -1,8 +1,8 @@
 
-def read_chunks_from_file(fin, block_size):
+def read_chunks_from_file(path, length):
     with open(path, 'rb', buffering=1024*64) as fin:
-        while True:
-            piece = fin.read(block_size)
+        for i, j, k in length:
+            piece = fin.read(j)
             if not piece:
                 return
             yield piece                                                    

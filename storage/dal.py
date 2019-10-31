@@ -2,6 +2,7 @@
 import os
 from model.image import ChunksImage
 from storage import io
+from rabin import Rabin, get_file_fingerprints, set_min_block_size, set_max_block_size, set_average_block_size
 
 class DAL():
     """ Data Access Layer
@@ -14,6 +15,8 @@ class DAL():
         self.chunk_size = chunk_size
         self.compressor = compressor
         self.hasher = hasher
+        set_min_block_size(4096)
+        set_average_block_size(chunk_size)
 
 
     def store_image(self, img_data):
@@ -45,7 +48,8 @@ class DAL():
             img_file = '/tmp/d.raw'
             delete_after = True
 
-        img_block_gen = io.read_chunks_from_file(img_file, self.chunk_size)
+        length = get_file_fingerprints(img_file)
+        img_block_gen = io.read_chunks_from_file(img_file, length)
         img_data = ChunksImage.new()
         #img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size))  #这个迭代器用的好像有问题
         img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
