@@ -23,7 +23,8 @@ class DAL():
 
     def retrieve_image_by_uuid(self, img_uuid):
         serialized_fp = self.ds.get(img_uuid)
-        fp = self.deserialize_total_fingerprints(serialized_fp)
+        #fp = self.deserialize_total_fingerprints(serialized_fp)
+        fp = self.deserialize_fingerprints(serialized_fp)
         return ChunksImage(img_uuid, fp)
 
 
@@ -44,8 +45,10 @@ class DAL():
             img_file = '/tmp/d.raw'
             delete_after = True
 
+        img_block_gen = io.read_chunks_from_file(img_file, self.chunk_size)
         img_data = ChunksImage.new()
-        img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size))  #这个迭代器用的好像有问题
+        #img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size))  #这个迭代器用的好像有问题
+        img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
         self.store_image(img_data)
 
         if delete_after:
@@ -91,24 +94,7 @@ class DAL():
             yield self.get_chunk(digest)
 
     def checkout_image(self, img_data, out_file):
-    #out_file is dir and should not end with '/'
-        if (out_file[-1] == '/'):
-            out_file = out_file[:-1]
-        
-        if not os.path.exists(out_file):
-            os.mkdir(out_file)
-
-        for dirs in img_data.fingerprints[-1]:
-            os.mkdir(out_file + dirs)
-
-        i = 0;    
-        for fp in img_data.fingerprints[:-1]:
-            i += 1
-            if i == 2:
-                i = 0
-                io.write_chunks_to_file(out_file + file, self._get_chunk_iter(fp))
-            else:
-                file = fp
+        io.write_chunks_to_file(out_file, self._get_chunk_iter(img_data))
 
     def is_image_exist(self, img_uuid):
         return self.ds.exists(img_uuid)
@@ -143,21 +129,9 @@ class DAL():
         return self.ds.used_memory()
 
     def serialize_fingerprints(self, fps):
-        list_ser = []
-        i = 0
-        for fp in fps[:-1]:
-            i += 1
-            if i == 2: 
-                i = 0
-                for fpp in fp:
-                    assert len(fpp) == self.hasher.get_digest_size()
-                list_ser.append(''.join(fp))
-            else:
-                list_ser.append(fp)
-
-        list_ser.append('|'.join(fps[-1]))
-        #return  file:fp:file:fp......:dir|dir|...dir
-        return ':'.join(list_ser)
+        for fp in fps:
+            assert len(fp) == self.hasher.get_digest_size()
+        return ''.join(fps)
 
     def deserialize_total_fingerprints(self, ser_fps):
         list_des = []

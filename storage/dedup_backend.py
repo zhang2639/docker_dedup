@@ -83,15 +83,7 @@ class DedupBackendStorage(BackendStorage):
     #     return True
 
     def _get_chunks_non_available_locally(self, img_data):
-        i = 0
-        list_fp = []
-        for fp in img_data.fingerprints[:-1]:
-            i += 1
-            if i == 2:
-                i = 0
-                list_fp.extend(fp)
-
-        return filter(lambda fp: not self.dal.is_chunk_exist(fp), set(list_fp)) #该接收两个参数，第一个为函数，第二个为序列，序列的每个元素作为参数传递给函数进行判，然后返回 True 或 False，最后将返回 True 的元素放到新列表中。
+        return filter(lambda fp: not self.dal.is_chunk_exist(fp), set(img_data.fingerprints)) #该接收两个参数，第一个为函数，第二个为序列，序列的每个元素作为参数传递给函数进行判，然后返回 True 或 False，最后将返回 True 的元素放到新列表中。
                                                                     #set() 函数创建一个无序不重复元素集
     def _update_loc_map(self, fingerprints, sender_id):
         for fp in fingerprints:
