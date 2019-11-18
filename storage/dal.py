@@ -26,8 +26,7 @@ class DAL():
 
     def retrieve_image_by_uuid(self, img_uuid):
         serialized_fp = self.ds.get(img_uuid)
-        #fp = self.deserialize_total_fingerprints(serialized_fp)
-        fp = self.deserialize_fingerprints(serialized_fp)
+        fp = self.deserialize_total_fingerprints(serialized_fp)
         return ChunksImage(img_uuid, fp)
 
 
@@ -49,9 +48,13 @@ class DAL():
             delete_after = True
 
         length = get_file_fingerprints(img_file)
+        length_list = []
+        for i, j, k in length:
+            length_list.append(str(j))
+
         img_block_gen = io.read_chunks_from_file(img_file, length)
         img_data = ChunksImage.new()
-        #img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size))  #这个迭代器用的好像有问题
+        img_data.fingerprints.append('|'.join(length_list))
         img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
         self.store_image(img_data)
 
@@ -93,8 +96,8 @@ class DAL():
         return list_meta
 
 
-    def _get_chunk_iter(self, fp):
-        for digest in fp:
+    def _get_chunk_iter(self, img_data):
+        for digest in img_data.fingerprints[1]:
             yield self.get_chunk(digest)
 
     def checkout_image(self, img_data, out_file):
@@ -133,24 +136,19 @@ class DAL():
         return self.ds.used_memory()
 
     def serialize_fingerprints(self, fps):
-        for fp in fps:
+        #[l1|l2|l3, fp, fp, fp...]
+        for fp in fps[1:]:
             assert len(fp) == self.hasher.get_digest_size()
-        return ''.join(fps)
+        assert len(fps[0].split('|')) == len(fps[1:])
+
+        return fps[0] + ':' + ''.join(fps[1:])
 
     def deserialize_total_fingerprints(self, ser_fps):
         list_des = []
-        list_ori = ser_fps.spilt(':')
-        i = 0
-        for fp in list_ori[:-1]:
-            i += 1
-            if i == 2:
-                i = 0
-                list_des.append(self.deserialize_fingerprints(fp))
-            else:
-                list_des.append(fp)
-
-        list_des.append(list_ori[-1].spilt('|'))
-        #return [file, [fp], file, [fp]....[dir]]
+        list_ori = ser_fps.split(':')
+        list_des.append(list_ori[0].split('|'))
+        list_des.append(self.deserialize_fingerprints(list_ori[-1]))        
+        #return [[l1, l2, l3...], [fp, fp, fp...]]
         return list_des
 
 
