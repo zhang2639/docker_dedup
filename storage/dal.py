@@ -14,6 +14,7 @@ class DAL():
         self.ds = ds
         self.compressor = compressor
         self.hasher = hasher
+        self.size = 0
         set_min_block_size(chunk_min_size)
         set_average_block_size(chunk_ave_size)
         set_max_block_size(chunk_max_size)
@@ -46,7 +47,8 @@ class DAL():
             io.decompress_file(img_file, '/tmp/d.raw', self.compressor)
             img_file = '/tmp/d.raw'
             delete_after = True
-
+        import os
+        self.size = self.size + os.path.getsize(img_file)
         length = get_file_fingerprints(img_file)
         length_list = []
         for i, j, k in length:
