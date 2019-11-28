@@ -18,7 +18,7 @@ class Image(object):
 class ChunksImage(Image):
     """ Represent a chunked image with a list of fingertprints"""
 
-    def __init__(self, uuid, fingerprints, meta_data=None):
+    def __init__(self, uuid, fingerprints):
         super(ChunksImage, self).__init__(uuid)
         self.fingerprints = fingerprints  #list 列表
 
@@ -26,8 +26,8 @@ class ChunksImage(Image):
         self.fingerprints.append(fingerptint)
 
     @staticmethod
-    def new():
-        return ChunksImage(str(uuid.uuid4()), list())
+    def new(uuid):
+        return ChunksImage(uuid, list())
 
     def __str__(self):
         return "UUID: [%s] Hashs(%d): %s" % (self.uuid, len(self.fingerprints), object.__str__(self))

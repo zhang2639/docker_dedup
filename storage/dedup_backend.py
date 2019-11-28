@@ -135,8 +135,32 @@ class DedupBackendStorage(BackendStorage):
     ### Public API
 
     def add_image(self, image_file, image_metadata):
+        uuid_list = []
+        if image_file.find(":") > -1:
+            import tarfile, os
+            os.system("sudo docker save " + image_file + ' -o /tmp/test.tar')
+            tar = tarfile.open("/tmp/test.tar")
+            tar.extractall('/tmp/dataset')
+            tar.close()
+            for root, dirs, files in os.walk('/tmp/dataset'):
+                for name in files:
+                    if name == "layer.tar":
+                        self.logger.info("DedupBackendStorage: Add Image %s", os.path.join(root, name))
+                        f = os.popen("sha256sum " + os.path.join(root, name))
+                        img_data = self.dal.add_image(os.path.join(root, name), f.read().split(" ")[0])
+                        f.close()
+                        self._publish_fingerprints(img_data)
+                        self.logger.info("Image [%s] metadata has been replicated to all sites.", img_data.uuid)
+                        uuid_list.append(img_data.uuid)
+            os.system("sudo rm -rf /tmp/dataset")
+            os.remove("/tmp/test.tar")
+            return str(uuid_list)
+
+        import os
         self.logger.info("DedupBackendStorage: Add Image %s", image_file)
-        img_data = self.dal.add_image(image_file)
+        f = os.popen("sha256sum " + image_file)
+        img_data = self.dal.add_image(image_file, f.read().split(" ")[0])
+        f.close()
         # synchronous meta-data replication
         # synchronous meta-data transfer to network module but not other peers!!
         # threading.Thread(target=self._publish_fingerprints, args=(img_data,)).run()

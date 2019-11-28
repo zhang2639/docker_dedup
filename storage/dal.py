@@ -31,23 +31,9 @@ class DAL():
         return ChunksImage(img_uuid, fp)
 
 
-    def add_image(self, img_file):
-
-        delete_after = False
-
-        if img_file.endswith(".tar.gz"):
-            import tarfile
-            tar = tarfile.open(img_file)
-            tar.extractall('/tmp/dataset')
-            tar.close()
-            img_file = '/tmp/' + img_file[:-7]
-            delete_after = True
-
-        if img_file.endswith(".zip"):
-            io.decompress_file(img_file, '/tmp/d.raw', self.compressor)
-            img_file = '/tmp/d.raw'
-            delete_after = True
+    def add_image(self, img_file, uuid):
         import os
+        
         self.size = self.size + os.path.getsize(img_file)
         length = get_file_fingerprints(img_file)
         length_list = []
@@ -55,14 +41,10 @@ class DAL():
             length_list.append(str(j))
 
         img_block_gen = io.read_chunks_from_file(img_file, length)
-        img_data = ChunksImage.new()
+        img_data = ChunksImage.new(uuid)
         img_data.fingerprints.append('|'.join(length_list))
         img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
         self.store_image(img_data)
-
-        if delete_after:
-            import os
-            os.remove(img_file)
 
         return img_data
 
