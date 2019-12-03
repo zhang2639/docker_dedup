@@ -19,6 +19,9 @@ storage_algorithm: md5
 storage_backend: redis
 storage_address: 127.0.0.1
 
+# docker home directory: /var/lib/docker
+docker_dir: /var/lib/docker
+
 # use image type to accelerate hash lookup: 0 (not) / 1 (use)
 image_type: 1
 

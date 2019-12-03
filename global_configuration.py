@@ -84,6 +84,9 @@ class NitroConfiguration(object):
     def storage_backend(self):
         return self.config["storage_backend"]
 
+    def docker_dir(self):
+        return self.config["docker_dir"]
+
     def compression_level(self):
         return self.config["compression_level"]
 

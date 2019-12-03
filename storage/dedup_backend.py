@@ -136,19 +136,32 @@ class DedupBackendStorage(BackendStorage):
 
     def add_image(self, image_file, image_metadata):
         uuid_list = []
+        dir = self.cfg.docker_dir()
+        digest_dir = dir + '/image/overlay2/distribution/v2metadata-by-diffid/sha256/'
         if image_file.find(":") > -1:
-            import tarfile, os
+            import tarfile, os, json
             os.system("sudo docker save " + image_file + ' -o /tmp/test.tar')
             tar = tarfile.open("/tmp/test.tar")
             tar.extractall('/tmp/dataset')
             tar.close()
             for root, dirs, files in os.walk('/tmp/dataset'):
                 for name in files:
+                    if name.endswith(".json"):
+                        if name.startswith("manifest") == False:
+                            self.logger.info("DedupBackendStorage: Add Image %s", os.path.join(root, name))
+                            img_data = self.dal.add_image(os.path.join(root, name), name[:-5])
+                            self._publish_fingerprints(img_data)
+                            self.logger.info("Image [%s] metadata has been replicated to all sites.", img_data.uuid)
+                            uuid_list.append(img_data.uuid)
+                            continue
+
                     if name == "layer.tar":
                         self.logger.info("DedupBackendStorage: Add Image %s", os.path.join(root, name))
                         f = os.popen("sha256sum " + os.path.join(root, name))
-                        img_data = self.dal.add_image(os.path.join(root, name), f.read().split(" ")[0])
+                        f_digest = open(digest_dir + f.read().split(" ")[0], "r")
+                        img_data = self.dal.add_image(os.path.join(root, name), json.loads(f_digest.read())[0]["Digest"][7:])
                         f.close()
+                        f_digest.close()
                         self._publish_fingerprints(img_data)
                         self.logger.info("Image [%s] metadata has been replicated to all sites.", img_data.uuid)
                         uuid_list.append(img_data.uuid)
