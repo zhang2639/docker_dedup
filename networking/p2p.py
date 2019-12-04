@@ -77,7 +77,7 @@ class PeerNode(object):
                 self.sockets_lst[pid].add_socket(clientsocket) #把客户端建立的链接socket注册保存起来
                 self.logger.info("New connection established with peer id:[%d]", pid)
 
-        self.serversocket.close()
+        self.serversocket.close() #maybe question
 
     def _init_sockets(self):
 

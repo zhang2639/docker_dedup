@@ -98,7 +98,7 @@ class MegaSocket(object):
         # conn_listener.setDaemon(True)
         self.connListeners.append(conn_listener)
 
-    def send_message(self, msg):
+    def send_message(self, msg): #p2p send data
         sq = self.send_pool.next()
         self._send_message_to_socket(sq, msg)
         return True

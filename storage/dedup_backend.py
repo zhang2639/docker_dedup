@@ -98,7 +98,7 @@ class DedupBackendStorage(BackendStorage):
     def _publish_fingerprints(self, img_data):
         self.logger.info("start _publish_fingerprints")
         ser_fps = self.dal.serialize_fingerprints(img_data.fingerprints)
-        self.p2p_rpc.send_message(MSG_TAGS.NEW_IMG, [img_data.uuid, ser_fps]) #通知自己本地的指纹
+        self.p2p_rpc.send_message(MSG_TAGS.NEW_IMG, [img_data.uuid, ser_fps]) #通知所有节点自己新有镜像的指纹
         self.logger.info("_publish_fingerprints done")
 
     # def _all_chunks_available_locally(self, img_data):
@@ -120,41 +120,41 @@ class DedupBackendStorage(BackendStorage):
 
     ### callbacks
 
-#    def chunks_received_callback(self, msg_body, sender_id):
-#        fp, chunk = msg_body[0], msg_body[1]
-#        self.dal.add_compressed_chunk(fp, chunk)
-#        self.received_chunks.append(fp)
-#        self.q.put((fp, self.dal.compressor.decompress(chunk)))
-#        # self.logger.info("new received chunks from %d ", sender_id)
-#        if len(self.received_chunks) % 1000 == 0:
-#            self.logger.debug("Received chunks so far: %d chunks", len(self.received_chunks))
-#        if len(self.received_chunks) == self.nb_requested_chunks:
-#            self.on_chunks_received.set()
+    def chunks_received_callback(self, msg_body, sender_id):
+        fp, chunk = msg_body[0], msg_body[1]
+        self.dal.add_compressed_chunk(fp, chunk)
+        self.received_chunks.append(fp)
+        self.q.put((fp, self.dal.compressor.decompress(chunk)))
+        # self.logger.info("new received chunks from %d ", sender_id)
+        if len(self.received_chunks) % 1000 == 0:
+            self.logger.debug("Received chunks so far: %d chunks", len(self.received_chunks))
+        if len(self.received_chunks) == self.nb_requested_chunks:
+            self.on_chunks_received.set()
 
-#    def hash_available_callback(self, msg_body, sender_id):
-#        fingerprints = self.dal.deserialize_fingerprints(msg_body[0])
-#        self._update_loc_map(fingerprints, sender_id)
+    def hash_available_callback(self, msg_body, sender_id):
+        fingerprints = self.dal.deserialize_fingerprints(msg_body[0])
+        self._update_loc_map(fingerprints, sender_id)
 
-#    def chunks_request_callback_thread(self, msg_body, sender_id):
-#        fingerprints = self.dal.deserialize_fingerprints(msg_body[0])
-#        for fp in fingerprints:
-#            # self.logger.info('chunks_request_callback [%d] ***' % sender_id)
-#            chunk = self.dal.get_compressed_chunk(fp)
-#            self.p2p_rpc.send_message(MSG_TAGS.CHUNK_REC, [fp, chunk], sender_id)
-#        self.logger.info("chunks_request_callback for peer [%d] is done.", sender_id)
+    def chunks_request_callback_thread(self, msg_body, sender_id):
+        fingerprints = self.dal.deserialize_fingerprints(msg_body[0])
+        for fp in fingerprints:
+            # self.logger.info('chunks_request_callback [%d] ***' % sender_id)
+            chunk = self.dal.get_compressed_chunk(fp)
+            self.p2p_rpc.send_message(MSG_TAGS.CHUNK_REC, [fp, chunk], sender_id)
+        self.logger.info("chunks_request_callback for peer [%d] is done.", sender_id)
 
-#    def chunks_request_callback(self, msg_body, sender_id):
-#        threading.Thread(target=self.chunks_request_callback_thread,
-#                        args=(msg_body, sender_id)).start()
+    def chunks_request_callback(self, msg_body, sender_id):
+        threading.Thread(target=self.chunks_request_callback_thread,
+                        args=(msg_body, sender_id)).start()
 
-#    def new_image_callback(self, msg_body, sender_id):
-#        uuid, ser_fps = msg_body[0], msg_body[1]
-#        fingerprints = self.dal.deserialize_fingerprints(ser_fps)
-#        self.logger.info("New Image added: uuid=[%s] hashes size=[%dB]", uuid, len(ser_fps))
-#        img_data = ChunksImage(uuid, fingerprints)
-#        self.logger.info("New Image added: %s", str(img_data))
-#        self.dal.store_image(img_data)
-#        self._update_loc_map(set(img_data.fingerprints), sender_id)
+    def new_image_callback(self, msg_body, sender_id):
+        uuid, ser_fps = msg_body[0], msg_body[1]
+        fingerprints = self.dal.deserialize_fingerprints(ser_fps)
+        self.logger.info("New Image added: uuid=[%s] hashes size=[%dB]", uuid, len(ser_fps))
+        img_data = ChunksImage(uuid, fingerprints)
+        self.logger.info("New Image added: %s", str(img_data))
+        self.dal.store_image(img_data)
+        self._update_loc_map(set(img_data.fingerprints), sender_id)
 
 
     ### Public API
