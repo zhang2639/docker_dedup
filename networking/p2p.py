@@ -1,3 +1,4 @@
+# coding:utf-8 
 import logging
 import socket
 from threading import Thread
@@ -62,29 +63,29 @@ class PeerNode(object):
     def _listen_for_incomming_conn(self):
 
         self.serversocket = self.create_socket()
-        self.serversocket.bind(self.peer_addr)
-        self.serversocket.listen(self.nb_peers)
+        self.serversocket.bind(self.peer_addr) #bind到自己的地址
+        self.serversocket.listen(self.nb_peers) #最大监听数量
 
         self.logger.info("init_sockets: accept..")
         for _ in range(self.peer_id):
-            for _ in range(self.max_conn_count):
+            for _ in range(self.max_conn_count):  #貌似是这个节点和其他每个节点能建立的链接的数量
                 clientsocket, address = self.serversocket.accept()
                 pid = b2i(clientsocket.recv(4))
                 if pid not in self.peers_ids:
                     self.logger.error("Connection received from unknow peer id:[%d]", pid)
                     continue
-                self.sockets_lst[pid].add_socket(clientsocket)
+                self.sockets_lst[pid].add_socket(clientsocket) #把客户端建立的链接socket注册保存起来
                 self.logger.info("New connection established with peer id:[%d]", pid)
 
         self.serversocket.close()
 
     def _init_sockets(self):
 
-        accept_conn_t = Thread(name="AcceptConn", target=self._listen_for_incomming_conn)
+        accept_conn_t = Thread(name="AcceptConn", target=self._listen_for_incomming_conn) #自己ID之前等待别人链接
         accept_conn_t.start()
 
         self.logger.info("init_sockets: connect..")
-        for pid in range(self.nb_peers-1, self.peer_id, -1):
+        for pid in range(self.nb_peers-1, self.peer_id, -1):  #ID之后，自己去连接别人
             for _ in range(self.max_conn_count):
                 s = self.create_socket()
                 s.settimeout(10)
@@ -148,7 +149,7 @@ class PeerNode(object):
 
     def publish_message(self, msg):
         self.logger.info("publish_message: %s", msg)
-        for pid, _ in self.sockets_pid:
+        for pid, _ in self.sockets_pid: #除了自己的其他ID
             self._send_message_wrapper(pid, msg)
 
     def send_message(self, pid, msg):

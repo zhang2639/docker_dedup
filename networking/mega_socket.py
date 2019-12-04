@@ -77,7 +77,7 @@ class MegaSocket(object):
         self.logger.debug("send msg [%s] thru socket id: %d", msg, sq._id)
         try:
             nb_parts = len(msg.body)
-            packet = chr(msg.tag) + chr(nb_parts) + ''.join([i2b(len(part)) + part for part in msg.body])
+            packet = chr(msg.tag) + chr(nb_parts) + ''.join([i2b(len(part)) + part for part in msg.body]) #chr(i) return thr ASCII of int i
             # total_written = sq.s.send(packet)
             total_written = self.mysend(sq.s, packet)
             if total_written != len(packet):
@@ -92,7 +92,7 @@ class MegaSocket(object):
             return False
 
     def add_socket(self, _socket):
-        sq = SocketQ(_socket, Queue(), len(self._sockets_q))
+        sq = SocketQ(_socket, Queue(), len(self._sockets_q)) #id
         self._sockets_q.append(sq)
         conn_listener = ConnectionListener(sq)
         # conn_listener.setDaemon(True)
@@ -108,7 +108,7 @@ class MegaSocket(object):
 
     def mega_listener(self):
         for sq in cycle(self._sockets_q):
-            msg, rx = sq.q.get(True)
+            msg, rx = sq.q.get(True) #True means wait until queue having data
             self.rx += rx
             self.callback(msg, self.peer_id)
 

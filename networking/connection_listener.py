@@ -1,3 +1,4 @@
+# coding:utf-8 
 import logging
 import socket
 from threading import Thread
@@ -43,7 +44,7 @@ class ConnectionListener(Thread):
             print "timeout in _recv"
 
     def _read_byte(self):
-        return ord(self._recv(1))
+        return ord(self._recv(1)) #ord() 函数是 chr() 函数的相反函数，返回字符的ASCII数值
 
     def _read_int(self):
         return b2i(self._recv(4))
@@ -80,7 +81,7 @@ class ConnectionListener(Thread):
                 msg = CustomMessage(tag, packet_parts)
                 self.logger.debug("packet received %s", msg)
 
-                rx = 1 + 1 + 4*nb_parts + sum(map(len, msg.body))
+                rx = 1 + 1 + 4*nb_parts + sum(map(len, msg.body)) #1字节tag，1字节parts数量，每个part由4自己int表示的长度以及自身的长度组成
                 self.notify((msg, rx))
 
             except socket.timeout:

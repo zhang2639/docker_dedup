@@ -1,3 +1,4 @@
+# coding:utf-8 
 import logging
 
 from networking.custom_message import CustomMessage
@@ -51,7 +52,7 @@ class ProxyRPC(object):
                 self.logger.error("zmq socket closed (could be ignored if closed on exit)")
                 self.logger.exception(e)
                 break
-            destination, tag, nb_body_parts = eval(recv_data)
+            destination, tag, nb_body_parts = eval(recv_data) #将数据转化为元组或者列表或者字典
             body = [self.recv_socket.recv() for _ in range(nb_body_parts)]
 
             msg = CustomMessage(tag, body)

@@ -30,8 +30,16 @@ class DedupBackendStorage(BackendStorage):
         self.cfg = cfg
 
         self.chunks_mapping = {}
+        self.peers_affinity = None
 
         self.logger = logging.getLogger('proxy')
+
+        self.p2p_rpc = ZmqStorageNetworkingRpc(self.cfg)
+
+        self.p2p_rpc.add_callback(MSG_TAGS.CHUNK_REC, self.chunks_received_callback)
+        self.p2p_rpc.add_callback(MSG_TAGS.HASH_AVIL, self.hash_available_callback)
+        self.p2p_rpc.add_callback(MSG_TAGS.REQ_CHUNK, self.chunks_request_callback)
+        self.p2p_rpc.add_callback(MSG_TAGS.NEW_IMG, self.new_image_callback)
 
         #self.stat = Statistics(self, self.cfg.output_csv_path())
 
@@ -50,6 +58,18 @@ class DedupBackendStorage(BackendStorage):
         chunk_scheduler = None
         if self.cfg.chunk_scheduler() == 'random':
             chunk_scheduler = RandomScheduler(None, fingerprints, self.chunks_mapping)
+        elif self.cfg.chunk_scheduler() == 'network-aware':
+            if self.peers_affinity is None:
+                self.logger.warning("Peers affinity is not measured! USING DEFAULTS")
+                self.peers_affinity = self.cfg.peers_affinity()
+            else:
+                self.logger.info(self.peers_affinity)
+            current_chunks_mapping = dict(
+                (fp, self.chunks_mapping[fp]) for fp in fingerprints)
+            chunk_scheduler = NetworkAwareScheduler(range(self.cfg.nb_sites()),
+                                                    fingerprints,
+                                                    current_chunks_mapping,
+                                                    self.peers_affinity)
         else:
             raise Exception('unknown chunk scheduler: [%s]' % chunk_scheduler)
         requests = chunk_scheduler.schedule()
@@ -62,18 +82,23 @@ class DedupBackendStorage(BackendStorage):
 
         self.received_chunks = []
         self.nb_requested_chunks = len(fingerprints)
+        self.on_chunks_received = threading.Event()
 
         for pid in requests:
             if not requests[pid]:
                 continue
             ser_fps = self.dal.serialize_fingerprints(requests[pid])
+            self.p2p_rpc.send_message(MSG_TAGS.REQ_CHUNK, [ser_fps], pid)
+
+        self.on_chunks_received.wait()
+        self.on_chunks_received.clear()
 
         return self.received_chunks
 
     def _publish_fingerprints(self, img_data):
         self.logger.info("start _publish_fingerprints")
         ser_fps = self.dal.serialize_fingerprints(img_data.fingerprints)
-        #通知自己本地的指纹
+        self.p2p_rpc.send_message(MSG_TAGS.NEW_IMG, [img_data.uuid, ser_fps]) #通知自己本地的指纹
         self.logger.info("_publish_fingerprints done")
 
     # def _all_chunks_available_locally(self, img_data):
@@ -301,4 +326,5 @@ class DedupBackendStorage(BackendStorage):
 
     def finalize(self):
         self.logger.info("DedupBackendStorage finalize")
+        self.p2p_rpc.finalize()
         self.logger.info("DedupBackendStorage finalize done")
