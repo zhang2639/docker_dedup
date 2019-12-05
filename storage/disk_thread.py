@@ -16,12 +16,7 @@ class DiskThread(Thread):
         self.fp_list = fp_list
         self.chunk_size = chunk_size
         self.q = q
-
         self.inv_fp_list = dict()
-        for i, fp in enumerate(self.fp_list):
-            if fp not in self.inv_fp_list:
-                self.inv_fp_list[fp] = list()
-            self.inv_fp_list[fp].append(i)
 
         # f=open(self.filepath, "w")
         # f.truncate(filesize)
@@ -29,17 +24,25 @@ class DiskThread(Thread):
 
     def run(self):
         # self.logger.info('Starting Listener')
+        data = list()
+        for i, fp in enumerate(self.fp_list[1]):
+            if fp not in self.inv_fp_list:
+                self.inv_fp_list[fp] = list()
+            self.inv_fp_list[fp].append(i)
+            data.append(0)
+
         f = open(self.filepath, 'wb')
         while True:
             fp, chunk = self.q.get()
             if fp == 'None':
-                f.close()
                 break
             for i in self.inv_fp_list[fp]:
                 # print i
-                f.seek(i * self.chunk_size)
-                f.write(chunk)
-
+#                f.seek(i * self.chunk_size)
+#                f.write(chunk)
+                data[i] = chunk
+        f.write(''.join(data))
+        f.close()
 
 def write_chunk_image(filepath, chunk_size, fp_list, q):
     inv_fp_list = dict()

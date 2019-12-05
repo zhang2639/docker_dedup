@@ -11,9 +11,12 @@ service redis start
 chkconfig redis on
 
 yum install python-devel
-pip install docopt pyyaml xxhash pyzmq requests cherrypy redis networkx==2.2 bitarray
+yum install openssl
+yum install openssl-devel
+pip install docopt pyyaml xxhash pyzmq requests cherrypy==17.4.2 redis networkx==2.2 bitarray
 pip install contextlib2==0.5.5
 pip install more-itertools==5.0.0
+pip install PyRabin
 
 
 安装Cassandra
@@ -30,3 +33,11 @@ sudo pip install cassandra-driver
 
 
 https://www.cnblogs.com/rslai/p/8249812.html
+
+ubuntu:
+apt-get install -y software-properties-common
+apt-get update && apt-get install -y redis-server
+apt-get install openssl
+apt-get install libssl-dev
+pip install docopt pyyaml xxhash pyzmq requests cherrypy==17.4.2 redis networkx==2.2 bitarray contextlib2==0.5.5 more-itertools==5.0.0 
+pip install PyRabin

@@ -97,7 +97,7 @@ class DedupBackendStorage(BackendStorage):
 
     def _publish_fingerprints(self, img_data):
         self.logger.info("start _publish_fingerprints")
-        ser_fps = self.dal.serialize_fingerprints(img_data.fingerprints)
+        ser_fps = self.dal.serialize_total_fingerprints(img_data.fingerprints)
         self.p2p_rpc.send_message(MSG_TAGS.NEW_IMG, [img_data.uuid, ser_fps]) #通知所有节点自己新有镜像的指纹
         self.logger.info("_publish_fingerprints done")
 
@@ -115,12 +115,12 @@ class DedupBackendStorage(BackendStorage):
             if fp not in self.chunks_mapping:
                 self.chunks_mapping[fp] = bitarray(self.cfg.nb_sites())
                 self.chunks_mapping[fp].setall(0)
-            self.chunks_mapping[fp][sender_id] = 1
+            self.chunks_mapping[fp][sender_id] = 1 #在sender_id 这个节点这里有fp
         self.logger.debug("chunks_mapping has been updated: len=%d", len(self.chunks_mapping))
 
     ### callbacks
 
-    def chunks_received_callback(self, msg_body, sender_id):
+    def chunks_received_callback(self, msg_body, sender_id): #sender_id 这个节点想要msg_body这些数据块
         fp, chunk = msg_body[0], msg_body[1]
         self.dal.add_compressed_chunk(fp, chunk)
         self.received_chunks.append(fp)
@@ -149,12 +149,12 @@ class DedupBackendStorage(BackendStorage):
 
     def new_image_callback(self, msg_body, sender_id):
         uuid, ser_fps = msg_body[0], msg_body[1]
-        fingerprints = self.dal.deserialize_fingerprints(ser_fps)
+        fingerprints = self.dal.deserialize_total_fingerprints(ser_fps)
         self.logger.info("New Image added: uuid=[%s] hashes size=[%dB]", uuid, len(ser_fps))
         img_data = ChunksImage(uuid, fingerprints)
         self.logger.info("New Image added: %s", str(img_data))
         self.dal.store_image(img_data)
-        self._update_loc_map(set(img_data.fingerprints), sender_id)
+        self._update_loc_map(set(img_data.fingerprints[1]), sender_id)
 
 
     ### Public API
@@ -248,25 +248,25 @@ class DedupBackendStorage(BackendStorage):
                                      img_data.fingerprints, self.q)
                 self.dt.start()
 
-            available_fp = set(img_data.fingerprints) - set(non_available_fp)
+            available_fp = set(img_data.fingerprints[1]) - set(non_available_fp)
             read_local_chunks_t = threading.Thread(
                 target=self.fill_q_with_available_chunks, args=(available_fp,))
             read_local_chunks_t.start()
 
             self.logger.info("Image with uuid=[%s] is not available locally.", image_uuid)
 
-            self.stat.nb_chunks = len(img_data.fingerprints)
-            self.stat.nb_uniq_chunks = len(set(img_data.fingerprints))
-            self.stat.nb_missing_chunks = len(non_available_fp)
-            self.stat.nb_already_available_chunks = \
-            self.stat.nb_uniq_chunks - self.stat.nb_missing_chunks
+            nb_chunks = len(img_data.fingerprints[1])
+            nb_uniq_chunks = len(set(img_data.fingerprints[1]))
+            nb_missing_chunks = len(non_available_fp)
+            nb_already_available_chunks = \
+            nb_uniq_chunks - nb_missing_chunks
 
             self.logger.info("%d chunks are missing, out of %d",
-                             self.stat.nb_missing_chunks, self.stat.nb_uniq_chunks)
+                             nb_missing_chunks, nb_uniq_chunks)
 
-            self.stat.new_state('pull-st')
+            #self.stat.new_state('pull-st')
             hashes = self._retrieve_chunks(non_available_fp)
-            self.stat.new_state('pull-nd')
+            #self.stat.new_state('pull-nd')
             self.logger.info("All chunks of Image [%s] are available locally now.", image_uuid)
             ser_fps = self.dal.serialize_fingerprints(hashes)
             self.p2p_rpc.send_message(MSG_TAGS.HASH_AVIL, [ser_fps])

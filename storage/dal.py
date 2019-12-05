@@ -21,7 +21,7 @@ class DAL():
 
 
     def store_image(self, img_data):
-        serialized_fp = self.serialize_fingerprints(img_data.fingerprints) #将该image的所有哈希序列化成一串数字，然后和uuid存放起来。 这就是image的元数据
+        serialized_fp = self.serialize_total_fingerprints(img_data.fingerprints) #将该image的所有哈希序列化成一串数字，然后和uuid存放起来。 这就是image的元数据
         self.ds.put(img_data.uuid, serialized_fp)
         self.ds.persist()
 
@@ -42,8 +42,9 @@ class DAL():
 
         img_block_gen = io.read_chunks_from_file(img_file, length)
         img_data = ChunksImage.new(uuid)
-        img_data.fingerprints.append('|'.join(length_list))
-        img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
+        #img_data.fingerprints.append('|'.join(length_list))
+        img_data.fingerprints.append(length_list)
+        img_data.fingerprints.append(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
         self.store_image(img_data)
 
         return img_data
@@ -119,13 +120,16 @@ class DAL():
     def repo_size(self):
         return self.ds.used_memory()
 
-    def serialize_fingerprints(self, fps):
-        #[l1|l2|l3, fp, fp, fp...]
-        for fp in fps[1:]:
-            assert len(fp) == self.hasher.get_digest_size()
-        assert len(fps[0].split('|')) == len(fps[1:])
+    def serialize_total_fingerprints(self, fps):
+        #[[l1, l2, l3..], [fp, fp, fp...]]
+        assert len(fps[0]) == len(fps[1])
 
-        return fps[0] + ':' + ''.join(fps[1:])
+        return '|'.join(fps[0]) + ':' + self.serialize_fingerprints(fps[1])
+
+    def serialize_fingerprints(self, fps):
+        for fp in fps:
+            assert len(fp) == self.hasher.get_digest_size()
+        return ''.join(fps)
 
     def deserialize_total_fingerprints(self, ser_fps):
         list_des = []
