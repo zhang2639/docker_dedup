@@ -3,6 +3,7 @@ import os
 from model.image import ChunksImage
 from storage import io
 from rabin import Rabin, get_file_fingerprints, set_min_block_size, set_max_block_size, set_average_block_size
+from networking.net_utils import i2b, b2i
 
 class DAL():
     """ Data Access Layer
@@ -37,8 +38,22 @@ class DAL():
         self.size = self.size + os.path.getsize(img_file)
         length = get_file_fingerprints(img_file)
         length_list = []
-        for i, j, k in length:
-            length_list.append(str(j))
+        count = len(length)
+        point = 0
+        if count > 4:
+            count1 = count / 4
+            for i in range(count):
+                point += length[i][1]
+                if i % count1 == 0:
+                    length_list.append(i2b(point))
+                    point = 0
+                    continue
+                if i == (count - 1):
+                    length_list.append(i2b(point))
+        else:
+            for i in range(count):
+                point += length[i][1]
+            length_list.append(i2b(point))
 
         img_block_gen = io.read_chunks_from_file(img_file, length)
         img_data = ChunksImage.new(uuid)
@@ -122,7 +137,7 @@ class DAL():
 
     def serialize_total_fingerprints(self, fps):
         #[[l1, l2, l3..], [fp, fp, fp...]]
-        assert len(fps[0]) == len(fps[1])
+        #assert len(fps[0]) == len(fps[1])
 
         return '|'.join(fps[0]) + ':' + self.serialize_fingerprints(fps[1])
 
