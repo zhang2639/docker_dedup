@@ -32,12 +32,13 @@ class DAL():
         return ChunksImage(img_uuid, fp)
 
 
-    def add_image(self, img_file, uuid):
+    def add_image(self, img_file, uuid, image_type):
         import os
         
         self.size = self.size + os.path.getsize(img_file)
         length = get_file_fingerprints(img_file)
         length_list = []
+        length_list.append(str(image_type))
         count = len(length)
         point = 0
         if count > 4:
@@ -136,7 +137,7 @@ class DAL():
         return self.ds.used_memory()
 
     def serialize_total_fingerprints(self, fps):
-        #[[l1, l2, l3..], [fp, fp, fp...]]
+        #[[image_type, l1, l2, l3..], [fp, fp, fp...]]
         #assert len(fps[0]) == len(fps[1])
 
         return '|'.join(fps[0]) + ':' + self.serialize_fingerprints(fps[1])
@@ -151,7 +152,7 @@ class DAL():
         list_ori = ser_fps.split(':')
         list_des.append(list_ori[0].split('|'))
         list_des.append(self.deserialize_fingerprints(list_ori[-1]))        
-        #return [[l1, l2, l3...], [fp, fp, fp...]]
+        #return [[image_type, l1, l2, l3...], [fp, fp, fp...]]
         return list_des
 
 

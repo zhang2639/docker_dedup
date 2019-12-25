@@ -174,7 +174,7 @@ class DedupBackendStorage(BackendStorage):
                     if name.endswith(".json"):
                         if name.startswith("manifest") == False:
                             self.logger.info("DedupBackendStorage: Add Image %s", os.path.join(root, name))
-                            img_data = self.dal.add_image(os.path.join(root, name), name[:-5])
+                            img_data = self.dal.add_image(os.path.join(root, name), name[:-5], 1)
                             self._publish_fingerprints(img_data)
                             self.logger.info("Image [%s] metadata has been replicated to all sites.", img_data.uuid)
                             uuid_list.append(img_data.uuid)
@@ -184,7 +184,7 @@ class DedupBackendStorage(BackendStorage):
                         self.logger.info("DedupBackendStorage: Add Image %s", os.path.join(root, name))
                         f = os.popen("sha256sum " + os.path.join(root, name))
                         f_digest = open(digest_dir + f.read().split(" ")[0], "r")
-                        img_data = self.dal.add_image(os.path.join(root, name), json.loads(f_digest.read())[0]["Digest"][7:])
+                        img_data = self.dal.add_image(os.path.join(root, name), json.loads(f_digest.read())[0]["Digest"][7:].encode('utf-8'), 0)
                         f.close()
                         f_digest.close()
                         self._publish_fingerprints(img_data)
@@ -196,8 +196,14 @@ class DedupBackendStorage(BackendStorage):
 
         import os
         self.logger.info("DedupBackendStorage: Add Image %s", image_file)
+        f = os.popen("file " + image_file)
+        if f.read().find("ASCII") > -1:
+            image_type = 1 #config file
+        else:
+            image_type = 0 # normal layer
+        f.close()
         f = os.popen("sha256sum " + image_file)
-        img_data = self.dal.add_image(image_file, f.read().split(" ")[0])
+        img_data = self.dal.add_image(image_file, f.read().split(" ")[0], image_type)
         f.close()
         # synchronous meta-data replication
         # synchronous meta-data transfer to network module but not other peers!!
@@ -216,7 +222,7 @@ class DedupBackendStorage(BackendStorage):
 
         if not self.is_image_exist(image_uuid):
             self.logger.error("Image with UUID [%s] not found.", image_uuid)
-            return False
+            return -1
             # raise Exception('Image with UUID [%s] not found.' % image_uuid)
 
         #self.stat.start(image_uuid)
@@ -296,7 +302,7 @@ class DedupBackendStorage(BackendStorage):
         #self.stat.output_stats()
         self.logger.info("Checkout Image [%s] done.", image_uuid)
 
-        return True
+        return int(img_data.fingerprints[0][0])
 
     def is_image_exist(self, image_uuid):
         return self.dal.is_image_exist(image_uuid)
