@@ -230,6 +230,8 @@ class DedupBackendStorage(BackendStorage):
 
         img_data = self.dal.retrieve_image_by_uuid(image_uuid)
         self.logger.info("Checkout Image %s", str(img_data))
+        if img_data.fingerprints[0][0] == "1":
+            out_file = out_file + "-cfg"
         non_available_fp = self._get_chunks_non_available_locally(img_data)
         if non_available_fp:
 
@@ -302,7 +304,7 @@ class DedupBackendStorage(BackendStorage):
         #self.stat.output_stats()
         self.logger.info("Checkout Image [%s] done.", image_uuid)
 
-        return int(img_data.fingerprints[0][0])
+        return out_file
 
     def is_image_exist(self, image_uuid):
         return self.dal.is_image_exist(image_uuid)

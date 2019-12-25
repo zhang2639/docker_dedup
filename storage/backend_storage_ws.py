@@ -16,7 +16,7 @@ class BackendStorageWSServer(object):
     @cherrypy.expose
     def checkout(self, uuid, path):
         req = self.storage.checkout_image(str(uuid), path)
-        return str(req)
+        return req
 
     @cherrypy.expose
     def is_available(self, uuid):
