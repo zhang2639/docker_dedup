@@ -46,7 +46,7 @@ class DAL():
 
         img_data = ChunksImage.new()
         img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size))  #这个迭代器用的好像有问题
-        self.store_image(img_data)
+        #self.store_image(img_data)
 
         if delete_after:
             import os
@@ -72,6 +72,8 @@ class DAL():
                 #print(root.replace(path, '', 1) + '/' + f) #当前路径下所有非目录子文件
                 file = string + f
                 if os.path.islink(root + '/' + f):
+                    continue
+                if not os.path.isfile(root + '/' + f):
                     continue
                 try:
                     with open(root + '/' + f, 'rb', buffering=1024*64) as fin:

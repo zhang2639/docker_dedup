@@ -148,7 +148,7 @@ class DedupBackendStorage(BackendStorage):
         # synchronous meta-data replication
         # synchronous meta-data transfer to network module but not other peers!!
         # threading.Thread(target=self._publish_fingerprints, args=(img_data,)).run()
-        self._publish_fingerprints(img_data)
+        #self._publish_fingerprints(img_data)
         self.logger.info("Image [%s] metadata has been replicated to all sites.", img_data.uuid)
         return img_data.uuid
 
