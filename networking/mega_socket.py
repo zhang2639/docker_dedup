@@ -2,6 +2,7 @@ import logging
 import socket
 
 from Queue import Queue
+import multiprocessing as mp
 from itertools import cycle
 from threading import Thread
 
@@ -92,7 +93,7 @@ class MegaSocket(object):
             return False
 
     def add_socket(self, _socket):
-        sq = SocketQ(_socket, Queue(), len(self._sockets_q)) #id
+        sq = SocketQ(_socket, mp.Manager().Queue(), len(self._sockets_q)) #id
         self._sockets_q.append(sq)
         conn_listener = ConnectionListener(sq)
         # conn_listener.setDaemon(True)

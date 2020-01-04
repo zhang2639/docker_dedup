@@ -136,7 +136,7 @@ class PeerNode(object):
         for mega_socket_i in self.sockets_lst:
             if mega_socket_i is not None:
                 mega_socket_i.start_listening()
-        self.logger.info("sockets are lestening..")
+        self.logger.info("sockets are listening..")
 
 
     def _send_message_wrapper(self, pid, msg):
