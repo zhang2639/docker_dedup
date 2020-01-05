@@ -184,7 +184,7 @@ class DedupBackendStorage(BackendStorage):
                         self.logger.info("DedupBackendStorage: Add Image %s", os.path.join(root, name))
                         f = os.popen("sha256sum " + os.path.join(root, name))
                         f_digest = open(digest_dir + f.read().split(" ")[0], "r")
-                        img_data = self.dal.add_image(os.path.join(root, name), json.loads(f_digest.read())[0]["Digest"][7:])
+                        img_data = self.dal.add_image(os.path.join(root, name), json.loads(f_digest.read())[0]["Digest"][7:].encode('utf-8'))
                         f.close()
                         f_digest.close()
                         self._publish_fingerprints(img_data)
