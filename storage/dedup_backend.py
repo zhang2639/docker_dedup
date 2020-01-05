@@ -28,6 +28,7 @@ class DedupBackendStorage(BackendStorage):
         BackendStorage.__init__(self, 'deduplication', dal)
 
         self.cfg = cfg
+        self.id = self.cfg.peer_id()
 
         self.chunks_mapping = {}
         self.peers_affinity = None
@@ -51,11 +52,11 @@ class DedupBackendStorage(BackendStorage):
         """ Retrieve chunks from other peers.
             we assume that the chunks are available and reachable.
         """
-        self.logger.info("retrieve chunks to pid:%d", self.cfg.peer_id())
+        self.logger.info("retrieve chunks to pid:%d", self.id)
         self.logger.info(" -fingerprints: %d", len(fingerprints))
 
         #self.stat.new_state('flow-st', False)
-        chunk_scheduler = None
+        '''chunk_scheduler = None
         if self.cfg.chunk_scheduler() == 'random':
             chunk_scheduler = RandomScheduler(None, fingerprints, self.chunks_mapping)
         elif self.cfg.chunk_scheduler() == 'network-aware':
@@ -73,8 +74,10 @@ class DedupBackendStorage(BackendStorage):
         else:
             raise Exception('unknown chunk scheduler: [%s]' % chunk_scheduler)
         requests = chunk_scheduler.schedule()
+        '''
         #self.stat.new_state('flow-nd', False)
-
+        requests = {}
+        requests[0] = fingerprints
         # self.logger.info(" -requests: %r", requests)
         self.logger.info(" -requests: src=%d", self.cfg.peer_id())
         for pid in requests:
@@ -107,9 +110,18 @@ class DedupBackendStorage(BackendStorage):
     #             return False
     #     return True
 
+    def is_chunk_exist(self, fp):
+        if self.chunks_mapping.has_key(fp):
+            return self.chunks_mapping[fp][self.id] == 1
+        else:
+            return False
+
+
     def _get_chunks_non_available_locally(self, img_data):
-        return filter(lambda fp: not self.dal.is_chunk_exist(fp), set(img_data.fingerprints[1])) #该接收两个参数，第一个为函数，第二个为序列，序列的每个元素作为参数传递给函数进行判，然后返回 True 或 False，最后将返回 True 的元素放到新列表中。
+        #return filter(lambda fp: not self.dal.is_chunk_exist(fp), set(img_data.fingerprints[1])) #该接收两个参数，第一个为函数，第二个为序列，序列的每个元素作为参数传递给函数进行判，然后返回 True 或 False，最后将返回 True 的元素放到新列表中。
                                                                     #set() 函数创建一个无序不重复元素集
+        return filter(lambda fp: not self.is_chunk_exist(fp), set(img_data.fingerprints[1]))
+    
     def _update_loc_map(self, fingerprints, sender_id):
         for fp in fingerprints:
             if fp not in self.chunks_mapping:
@@ -126,8 +138,8 @@ class DedupBackendStorage(BackendStorage):
         self.received_chunks.append(fp)
         self.q.put((fp, self.dal.compressor.decompress(chunk)))
         # self.logger.info("new received chunks from %d ", sender_id)
-        if len(self.received_chunks) % 1000 == 0:
-            self.logger.debug("Received chunks so far: %d chunks", len(self.received_chunks))
+        #if len(self.received_chunks) % 1000 == 0:
+        #    self.logger.debug("Received chunks so far: %d chunks", len(self.received_chunks))
         if len(self.received_chunks) == self.nb_requested_chunks:
             self.on_chunks_received.set()
 
@@ -203,6 +215,7 @@ class DedupBackendStorage(BackendStorage):
         # synchronous meta-data transfer to network module but not other peers!!
         # threading.Thread(target=self._publish_fingerprints, args=(img_data,)).run()
         self._publish_fingerprints(img_data)
+        self._update_loc_map(img_data.fingerprints[1], self.id)
         self.logger.info("Image [%s] metadata has been replicated to all sites.", img_data.uuid)
         return img_data.uuid
 
@@ -266,6 +279,7 @@ class DedupBackendStorage(BackendStorage):
 
             #self.stat.new_state('pull-st')
             hashes = self._retrieve_chunks(non_available_fp)
+            self._update_loc_map(hashes, self.id)
             #self.stat.new_state('pull-nd')
             self.logger.info("All chunks of Image [%s] are available locally now.", image_uuid)
             ser_fps = self.dal.serialize_fingerprints(hashes)

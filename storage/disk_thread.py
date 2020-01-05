@@ -46,19 +46,20 @@ class DiskThread(Thread):
 
 def write_chunk_image(filepath, chunk_size, fp_list, q):
     inv_fp_list = dict()
-    for i, fp in enumerate(fp_list):
+    data = list()
+    for i, fp in enumerate(fp_list(1)):
         if fp not in inv_fp_list:
             inv_fp_list[fp] = list()
         inv_fp_list[fp].append(i)
+        data.append(0)
 
     f = open(filepath, 'wb')
     while True:
         fp, chunk = q.get()
         if fp == 'None':
-            f.close()
             break
         print len(inv_fp_list[fp])
         for i in inv_fp_list[fp]:
-            # print i
-            f.seek(i * chunk_size)
-            f.write(chunk)
+            data[i] = chunk
+        f.write(''.join(data))
+        f.close()    
