@@ -14,6 +14,7 @@ class DAL():
         self.ds = ds
         self.compressor = compressor
         self.hasher = hasher
+        self.chunk_size = chunk_min_size
         set_min_block_size(chunk_min_size)
         set_average_block_size(chunk_ave_size)
         set_max_block_size(chunk_max_size)
@@ -48,12 +49,15 @@ class DAL():
             img_file = '/tmp/d.raw'
             delete_after = True
 
-        length = get_file_fingerprints(img_file)
-        img_block_gen = io.read_chunks_from_file(img_file, length)
         img_data = ChunksImage.new()
-        #img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size))  #这个迭代器用的好像有问题
-        img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
-        self.store_image(img_data)
+        import os
+        if os.path.isdir(img_file):
+            img_data.fingerprints.extend(self.read_files_from_dir(img_file, self.chunk_size)) 
+        else:
+            length = get_file_fingerprints(img_file)
+            img_block_gen = io.read_chunks_from_file(img_file, length)
+            img_data.fingerprints.extend(self.add_chunks(img_block_gen))  #这个迭代器用的好像有问题
+        #self.store_image(img_data)
 
         if delete_after:
             import os
@@ -80,11 +84,13 @@ class DAL():
                 file = string + f
                 if os.path.islink(root + '/' + f):
                     continue
+                if not os.path.isfile(root + '/' + f):
+                    continue
                 try:
-                    with open(root + '/' + f, 'rb', buffering=1024*64) as fin:
-                        img_block_gen = io.read_chunks_from_file(fin, block_size)
-                        list_meta.append(file)
-                        list_meta.append(self.add_chunks(img_block_gen))
+                    print root + '/' + f
+                    length = get_file_fingerprints(root + '/' + f)
+                    img_block_gen = io.read_chunks_from_file(root + '/' + f, length)
+                    list_meta.append(self.add_chunks(img_block_gen))
                 except IOError:
                     print 'open %s error' % (root + '/' + f)
                     continue
