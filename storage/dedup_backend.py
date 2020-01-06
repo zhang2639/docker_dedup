@@ -30,7 +30,11 @@ class DedupBackendStorage(BackendStorage):
         self.cfg = cfg
         self.id = self.cfg.peer_id()
 
-        self.chunks_mapping = {}
+        map_retrive = self.dal.ds.get("map")
+        if not map_retrive:
+            self.chunks_mapping = {}
+        else:
+            self.chunks_mapping = eval(map_retrive)
         self.peers_affinity = None
 
         self.logger = logging.getLogger('proxy')
@@ -340,5 +344,6 @@ class DedupBackendStorage(BackendStorage):
 
     def finalize(self):
         self.logger.info("DedupBackendStorage finalize")
+        self.dal.ds.put("map", str(self.chunks_mapping))
         self.p2p_rpc.finalize()
         self.logger.info("DedupBackendStorage finalize done")
