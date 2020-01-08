@@ -252,7 +252,9 @@ class DedupBackendStorage(BackendStorage):
         return str(throughput) + str(self.peers_affinity)
 
     def info(self):
-        return 'Dump db:\n%s\nDump peers fp size:\n%d' % \
+        print self.dal.block
+	print self.dal.size
+	return 'Dump db:\n%s\nDump peers fp size:\n%d' % \
                 (self.dal.ds.dump(), len(self.chunks_mapping))
 
     def reset(self):

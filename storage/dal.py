@@ -18,7 +18,8 @@ class DAL():
         set_min_block_size(chunk_min_size)
         set_average_block_size(chunk_ave_size)
         set_max_block_size(chunk_max_size)
-
+	self.block = 0
+	self.size = 0.0
 
     def store_image(self, img_data):
         serialized_fp = self.serialize_fingerprints(img_data.fingerprints) #将该image的所有哈希序列化成一串数字，然后和uuid存放起来。 这就是image的元数据
@@ -117,7 +118,10 @@ class DAL():
         h = self.hasher.hash(chunk)
         if not self.ds.exists(h):  #块哈希不存在
             self.ds.put(h, self.compressor.compress(chunk))  #存进数据库key(哈希) - value(压缩块内容)
-        return h
+        else:
+	    self.block += 1
+	    self.size += len(chunk)
+	return h
 
     def add_chunks(self, chunks):
         hashes = map(self.add_chunk, chunks)  #第一个参数 function 以参数序列中的每一个元素调用 function 函数，返回包含每次 function 函数返回值的新列表。
