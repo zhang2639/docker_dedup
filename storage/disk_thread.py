@@ -58,8 +58,8 @@ def write_chunk_image(filepath, chunk_size, fp_list, q):
         fp, chunk = q.get()
         if fp == 'None':
             break
-        print len(inv_fp_list[fp])
+        #print len(inv_fp_list[fp])
         for i in inv_fp_list[fp]:
             data[i] = chunk
-        f.write(''.join(data))
-        f.close()    
+    f.write(''.join(data))
+    f.close()    

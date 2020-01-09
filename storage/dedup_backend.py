@@ -272,23 +272,23 @@ class DedupBackendStorage(BackendStorage):
 
             self.logger.info("Image with uuid=[%s] is not available locally.", image_uuid)
 
-            nb_chunks = len(img_data.fingerprints[1])
+            '''nb_chunks = len(img_data.fingerprints[1])
             nb_uniq_chunks = len(set(img_data.fingerprints[1]))
             nb_missing_chunks = len(non_available_fp)
             nb_already_available_chunks = \
             nb_uniq_chunks - nb_missing_chunks
 
             self.logger.info("%d chunks are missing, out of %d",
-                             nb_missing_chunks, nb_uniq_chunks)
+                             nb_missing_chunks, nb_uniq_chunks)'''
 
             #self.stat.new_state('pull-st')
             hashes = self._retrieve_chunks(non_available_fp)
             self._update_loc_map(hashes, self.id)
             #self.stat.new_state('pull-nd')
             self.logger.info("All chunks of Image [%s] are available locally now.", image_uuid)
-            ser_fps = self.dal.serialize_fingerprints(hashes)
+            '''ser_fps = self.dal.serialize_fingerprints(hashes)
             self.p2p_rpc.send_message(MSG_TAGS.HASH_AVIL, [ser_fps])
-            self.logger.info("newly received fingerprints are published.")
+            self.logger.info("newly received fingerprints are published.")'''
 
             read_local_chunks_t.join()
             self.q.put(('None', 'None'))
@@ -337,7 +337,9 @@ class DedupBackendStorage(BackendStorage):
 
     def reset(self):
         self.logger.info("begin resetting..")
-        self.chunks_mapping = dict()
+        for fp in self.chunks_mapping: #本地reset之后，可以接着使用方便修改网络实验
+            self.chunks_mapping[fp][self.id] = 0
+        #self.chunks_mapping = dict()
         self.dal.ds.reset()
         self.dal.size = 0
         self.logger.info("==================================")
