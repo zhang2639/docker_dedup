@@ -17,8 +17,8 @@ class DAL():
         self.hasher = hasher
         self.size = 0
         set_min_block_size(chunk_min_size)
-        set_average_block_size(chunk_ave_size)
         set_max_block_size(chunk_max_size)
+        set_average_block_size(chunk_ave_size)
 
 
     def store_image(self, img_data):

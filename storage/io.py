@@ -1,6 +1,6 @@
 
 def read_chunks_from_file(path, length):
-    with open(path, 'rb', buffering=1024*64) as fin:
+    with open(path, 'rb', buffering=1024*128) as fin:
         for i, j, k in length:
             piece = fin.read(j)
             if not piece:
