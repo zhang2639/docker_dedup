@@ -30,11 +30,12 @@ class DedupBackendStorage(BackendStorage):
         self.cfg = cfg
         self.id = self.cfg.peer_id()
 
-        map_retrive = self.dal.ds.get("map")
-        if not map_retrive:
-            self.chunks_mapping = {}
-        else:
-            self.chunks_mapping = eval(map_retrive)
+        #map_retrive = self.dal.ds.get("map")
+        #if not map_retrive:
+        self.chunks_mapping = {}
+        #else:
+            #self.chunks_mapping = eval(map_retrive)
+        self.image = {}
         self.peers_affinity = None
 
         self.logger = logging.getLogger('proxy')
@@ -170,6 +171,7 @@ class DedupBackendStorage(BackendStorage):
         img_data = ChunksImage(uuid, fingerprints)
         self.logger.info("New Image added: %s", str(img_data))
         self.dal.store_image(img_data)
+        self.image[uuid] = fingerprints #记录文件
         self._update_loc_map(set(img_data.fingerprints[1]), sender_id)
 
 
@@ -231,7 +233,7 @@ class DedupBackendStorage(BackendStorage):
     def checkout_image(self, image_uuid, out_file):
         self.logger.info("DedupBackendStorage: Checkout Image %s", image_uuid)
 
-        if not self.is_image_exist(image_uuid):
+        if not self.image.has_key(image_uuid):
             self.logger.error("Image with UUID [%s] not found.", image_uuid)
             return False
             # raise Exception('Image with UUID [%s] not found.' % image_uuid)
@@ -239,7 +241,7 @@ class DedupBackendStorage(BackendStorage):
         #self.stat.start(image_uuid)
         #self.stat.new_state('st')
 
-        img_data = self.dal.retrieve_image_by_uuid(image_uuid)
+        img_data = ChunksImage(image_uuid, self.image[image_uuid])
         self.logger.info("Checkout Image %s", str(img_data))
         non_available_fp = self._get_chunks_non_available_locally(img_data)
         if non_available_fp:
@@ -346,6 +348,6 @@ class DedupBackendStorage(BackendStorage):
 
     def finalize(self):
         self.logger.info("DedupBackendStorage finalize")
-        self.dal.ds.put("map", str(self.chunks_mapping))
+        #self.dal.ds.put("map", str(self.chunks_mapping))
         self.p2p_rpc.finalize()
         self.logger.info("DedupBackendStorage finalize done")
