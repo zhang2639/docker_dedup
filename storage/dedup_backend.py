@@ -37,7 +37,7 @@ class DedupBackendStorage(BackendStorage):
             #self.chunks_mapping = eval(map_retrive)
         self.image = {}
         self.peers_affinity = None
-
+	self.lock = threading.Lock()
         self.logger = logging.getLogger('proxy')
 
         self.p2p_rpc = ZmqStorageNetworkingRpc(self.cfg)
@@ -232,7 +232,7 @@ class DedupBackendStorage(BackendStorage):
 
     def checkout_image(self, image_uuid, out_file):
         self.logger.info("DedupBackendStorage: Checkout Image %s", image_uuid)
-
+	self.lock.acquire()
         if not self.image.has_key(image_uuid):
             self.logger.error("Image with UUID [%s] not found.", image_uuid)
             return False
@@ -291,7 +291,7 @@ class DedupBackendStorage(BackendStorage):
             '''ser_fps = self.dal.serialize_fingerprints(hashes)
             self.p2p_rpc.send_message(MSG_TAGS.HASH_AVIL, [ser_fps])
             self.logger.info("newly received fingerprints are published.")'''
-
+	    #read_local_chunks_t.start()
             read_local_chunks_t.join()
             self.q.put(('None', 'None'))
 
@@ -314,6 +314,7 @@ class DedupBackendStorage(BackendStorage):
 
         #self.stat.new_state('nd')
         #self.stat.output_stats()
+	self.lock.release()
         self.logger.info("Checkout Image [%s] done.", image_uuid)
 
         return True

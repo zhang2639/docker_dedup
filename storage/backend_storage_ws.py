@@ -45,7 +45,7 @@ class WSDriver(object):
 
     def configure(self):
         cherrypy.config.update({'server.socket_host': self.cfg.ws_address_bind()})
-        cherrypy.config.update({'server.socket_port': 8081})
+        cherrypy.config.update({'server.socket_port': 8080})
         # http://docs.cherrypy.org/en/latest/advanced.html#response-timeouts
         cherrypy.config.update({'response.timeout': 30 * 60})
         cherrypy.config.update({'engine.autoreload.on': False})
