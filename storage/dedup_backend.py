@@ -36,6 +36,7 @@ class DedupBackendStorage(BackendStorage):
         #else:
             #self.chunks_mapping = eval(map_retrive)
         self.image = {}
+        self.lock = threading.Lock()
         self.peers_affinity = None
 
         self.logger = logging.getLogger('proxy')
@@ -235,7 +236,7 @@ class DedupBackendStorage(BackendStorage):
 
     def checkout_image(self, image_uuid, out_file):
         self.logger.info("DedupBackendStorage: Checkout Image %s", image_uuid)
-
+        self.lock.acquire()
         if not self.image.has_key(image_uuid):
             self.logger.error("Image with UUID [%s] not found.", image_uuid)
             return False
@@ -273,7 +274,7 @@ class DedupBackendStorage(BackendStorage):
             available_fp = set(img_data.fingerprints[1]) - set(non_available_fp)
             read_local_chunks_t = threading.Thread(
                 target=self.fill_q_with_available_chunks, args=(available_fp,))
-            read_local_chunks_t.start()
+            #read_local_chunks_t.start()
 
             self.logger.info("Image with uuid=[%s] is not available locally.", image_uuid)
 
@@ -288,6 +289,7 @@ class DedupBackendStorage(BackendStorage):
 
             #self.stat.new_state('pull-st')
             hashes = self._retrieve_chunks(non_available_fp)
+            read_local_chunks_t.start()
             self._update_loc_map(hashes, self.id)
             #self.stat.new_state('pull-nd')
             self.logger.info("All chunks of Image [%s] are available locally now.", image_uuid)
@@ -317,6 +319,7 @@ class DedupBackendStorage(BackendStorage):
 
         #self.stat.new_state('nd')
         #self.stat.output_stats()
+        self.lock.release()
         self.logger.info("Checkout Image [%s] done.", image_uuid)
 
         return True
