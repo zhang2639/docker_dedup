@@ -95,11 +95,14 @@ class DedupBackendStorage(BackendStorage):
         for pid in requests:
             if not requests[pid]:
                 continue
-            ser_fps = self.dal.serialize_fingerprints(requests[pid])
-            self.p2p_rpc.send_message(MSG_TAGS.REQ_CHUNK, [ser_fps], pid)
+            #ser_fps = self.dal.serialize_fingerprints(requests[pid])
+            for ser_fps in requests[pid]:
+                self.p2p_rpc.send_message(MSG_TAGS.REQ_CHUNK, [ser_fps], pid)
+                self.on_chunks_received.wait()
+                self.on_chunks_received.clear()
 
-        self.on_chunks_received.wait()
-        self.on_chunks_received.clear()
+        #self.on_chunks_received.wait()
+        #self.on_chunks_received.clear()
 
         return self.received_chunks
 
@@ -145,8 +148,8 @@ class DedupBackendStorage(BackendStorage):
         # self.logger.info("new received chunks from %d ", sender_id)
         #if len(self.received_chunks) % 1000 == 0:
         #    self.logger.debug("Received chunks so far: %d chunks", len(self.received_chunks))
-        if len(self.received_chunks) == self.nb_requested_chunks:
-            self.on_chunks_received.set()
+        #if len(self.received_chunks) == self.nb_requested_chunks:
+        self.on_chunks_received.set()
 
     def hash_available_callback(self, msg_body, sender_id):
         fingerprints = self.dal.deserialize_fingerprints(msg_body[0])
