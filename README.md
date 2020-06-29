@@ -1,6 +1,8 @@
 # docker_dedup
 deduplication in docker
 
+主要开发分支
+
 
 centos:
 yum install redis
