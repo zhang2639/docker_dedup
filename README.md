@@ -1,6 +1,9 @@
 # docker_dedup
 deduplication in docker
 
+加入了overlap的实验
+加入了并行拉取镜像层的锁
+
 
 centos:
 yum install redis
