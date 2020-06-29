@@ -1,6 +1,8 @@
 # docker_dedup
 deduplication in docker
 
+cdc测试镜像内冗余数据
+
 
 centos:
 yum install redis
